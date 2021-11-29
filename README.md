@@ -2,7 +2,7 @@
 
 ## Deployed on Rinkeby
 
-* "Exchange": "0x409c4D8cd5d2924b9bc5509230d16a61289c8153"
+* "Exchange": "0x6745e12db1128c603750fe3cc23ef02131a1b51e"
 
 * "TransferProxy": "0xCEd6e1030358B3b9d66C87Fa7344Cf3D0B68321c"
 
