@@ -36,12 +36,60 @@ abstract contract ExchangeCore is Initializable, OwnableUpgradeable, AssetMatche
         emit Cancel(orderKeyHash, order.maker, order.makeAsset.assetType, order.takeAsset.assetType);
     }
 
+    /*function matchOrdersWrapper(
+        address leftMaker,
+        bytes4 leftAssetClass,
+        bytes memory leftAssetData,
+        uint leftAssetValue,
+        uint leftSalt,
+        uint leftStart,
+        uint leftEnd,
+        bytes4 leftDataType,
+        bytes memory leftData,
+        bytes memory signatureLeft,
+        address rightMaker,
+        bytes4 rightAssetClass,
+        bytes memory rightAssetData,
+        uint rightAssetValue,
+        uint rightSalt,
+        uint rightStart,
+        uint rightEnd,
+        bytes4 rightDataType,
+        bytes memory rightData,
+        bytes memory signatureRight
+    ) external payable {
+        LibOrder.Order memory left = LibOrder.Order(
+            leftMaker,
+            LibAsset.Asset(LibAsset.AssetType(leftAssetClass, leftAssetData), leftAssetValue),
+            rightMaker,
+            LibAsset.Asset(LibAsset.AssetType(rightAssetClass, rightAssetData), rightAssetValue),
+            leftSalt,
+            leftStart,
+            leftEnd,
+            leftDataType,
+            leftData
+        );
+
+        LibOrder.Order memory right = LibOrder.Order(
+            rightMaker,
+            LibAsset.Asset(LibAsset.AssetType(rightAssetClass, rightAssetData), rightAssetValue),
+            rightMaker,
+            LibAsset.Asset(LibAsset.AssetType(leftAssetClass, leftAssetData), leftAssetValue),
+            leftSalt,
+            leftStart,
+            leftEnd,
+            leftDataType,
+            leftData
+        );
+        matchOrders(left, signatureLeft, right, signatureRight);
+    }*/
+
     function matchOrders(
         LibOrder.Order memory orderLeft,
         bytes memory signatureLeft,
         LibOrder.Order memory orderRight,
         bytes memory signatureRight
-    ) external payable {
+    ) public payable {
         validateFull(orderLeft, signatureLeft);
         validateFull(orderRight, signatureRight);
         if (orderLeft.taker != address(0)) {

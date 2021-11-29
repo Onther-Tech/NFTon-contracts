@@ -111,7 +111,7 @@ abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
         LibAsset.AssetType memory matchCalculate,
         bytes4 transferDirection
     ) internal returns (uint) {
-        (uint rest, uint fee) = subFeeInBp(totalAmount, amount, protocolFee.mul(2));
+        (uint rest, uint fee) = subFeeInBp(totalAmount, amount, protocolFee);
         if (fee > 0) {
             address tokenAddress = address(0);
             if (matchCalculate.assetClass == LibAsset.ERC20_ASSET_CLASS) {
