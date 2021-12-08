@@ -18,6 +18,7 @@ import "./lib/LibAsset.sol";
 import "./interfaces/ITransferManager.sol";
 
 import "./TransferExecutor.sol";
+import "hardhat/console.sol";
 
 abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
     using BpLibrary for uint;
@@ -195,6 +196,7 @@ abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
         }
         LibPart.Part memory lastPayout = payouts[payouts.length - 1];
         sumBps = sumBps.add(lastPayout.value);
+        console.log("bps: %s", sumBps);
         require(sumBps == 10000, "Sum payouts Bps not equal 100%");
         if (restValue > 0) {
             transfer(LibAsset.Asset(matchCalculate, restValue), from, lastPayout.account, transferDirection, PAYOUT);
