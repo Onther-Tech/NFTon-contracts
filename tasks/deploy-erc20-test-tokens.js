@@ -30,7 +30,8 @@ task("rinkeby-deploy-erc20-token-2", "").setAction(async() =>{
     const symbol = "S2";
     t2 = await ERC20TestContract.connect(deployer).deploy(name, symbol);
     await t2.deployed();
-
+    const t2Address = t2.address;
+    console.log({ t2Address });
     await run("verify", {
         address: t2Address,
         constructorArgsParams: [name, symbol], // arguments,

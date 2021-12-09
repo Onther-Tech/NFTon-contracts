@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
-const { Order, Asset, sign } = require("./exchange/utils/order");
-const { ERC20, enc, ETH, ERC721, COLLECTION } = require("./exchange/utils/assets");
+const { Order, Asset, sign } = require("./utils/order");
+const { ERC20, enc, ETH, ERC721, COLLECTION } = require("./utils/assets");
 
 describe("Exchange", () => {
 	const eth = "0x0000000000000000000000000000000000000000";
@@ -32,19 +32,8 @@ describe("Exchange", () => {
 		const ERC721TestContract = await ethers.getContractFactory("TestERC721");
 
 		const ERC20TestContract = await ethers.getContractFactory("TestERC20");
-		[
-            admin,
-            user1,
-            user2,
-            community,
-            protocol,
-            originReceiver1,
-            originReceiver2,
-            payoutsReceiver1,
-            payoutsReceiver2,
-        ] = await ethers.getSigners();	
-		
-        console.log({
+		[admin, user1, user2, community, protocol] = await ethers.getSigners();	
+		console.log({
 			admin: admin.address,
 			user1: user1.address,
 			user2: user2.address,
@@ -59,8 +48,10 @@ describe("Exchange", () => {
 
 		royaltiesRegistry = await TestRoyaltiesRegistryContract.deploy();
 		await royaltiesRegistry.deployed();
+
 		exchange = await upgrades.deployProxy(ExchangeContract, [transferProxy.address, erc20TransferProxy.address, 300, community.address, royaltiesRegistry.address], { initializer: "__ExchangeV2_init" });
 		await exchange.deployed();
+
 		t1 = await ERC20TestContract.deploy("T1", "S1");
 		await t1.deployed();
 
@@ -77,56 +68,49 @@ describe("Exchange", () => {
     	await exchange.setFeeReceiver(eth, protocol.address);
     	await exchange.setFeeReceiver(t1.address, protocol.address);
 	});
+
+	it("should match erc20 to erc721", async() => {
+		const erc721TokenId = 2;
+		const erc20Amount = 100;
+		const feeAmount = 3;
+
+		await erc721.mint(user1.address, erc721TokenId);
+		await t2.mint(user2.address, 2 * erc20Amount);
+
+		await erc721
+			.connect(user1)
+			.setApprovalForAll(transferProxy.address, true);
+
+		await t2
+			.connect(user2)
+			.approve(erc20TransferProxy.address, feeAmount + erc20Amount);
 	
-    function encodeData(data) {
-        return transferManagerTest.encode(data);
-    }
+		const left = Order(
+			user1.address,
+			Asset(ERC721, enc(erc721.address, erc721TokenId), 1),
+			ZERO, 
+			Asset(ERC20, enc(t2.address), 100),
+			1,
+			0,
+			0,
+			"0xffffffff",
+			"0x"
+		);
 
-	it("should match eth to erc20", async () => {
-		await t1.connect(admin).mint(user1.address, 100);
-		await t1.connect(user1).approve(erc20TransferProxy.address, 10000000);
-        const originsLeft = [
-            [originReceiver1.address, 100],
-        ];
-        const originsRight = [
-            [originReceiver2.address, 200]
-        ];
-
-        const payoutsLeft = [
-            [payoutsReceiver1.address, 100],
-        ];
-        const payoutsRight = [
-            [payoutsReceiver1.address, 200]
-        ];
-
-        const encDataLeft = await encodeData(
-            [payoutsLeft, originsLeft]
-        );
-        const encDataLeft = await encodeData(
-            [payoutsLeft, originsLeft]
-        );
-        
-        const left = Order(
-            user1.address,
-            Asset(ERC20, enc(t1.address), 100), ZERO, Asset(ERC20, enc(t2.address), 200),
-            1,
-            0,
-            0,
-            ORDER_DATA_V1, 
-            encDataLeft
-        );
-        const right = Order(
-            user2.address,
-            Asset(ERC20, enc(t2.address), 200), ZERO, Asset(ERC20, enc(t1.address), 100), 1, 0, 0, ORDER_DATA_V1, encDataRight);
-
-		const right = Order(user1.address, Asset(ERC20, enc(t1.address), 100), ZERO, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
-    	const left = Order(user2.address, Asset(ETH, "0x", 200), ZERO, Asset(ERC20, enc(t1.address), 100), 1, 0, 0, "0xffffffff", "0x");
+		const right = Order(
+			user2.address,
+			Asset(ERC20, enc(t2.address), 100),
+			ZERO,
+			Asset(ERC721, enc(erc721.address, erc721TokenId), 1),
+			1,
+			0,
+			0,
+			"0xffffffff",
+			"0x"
+		);
 		const tx = await exchange
 			.connect(user2)
-			.matchOrders(left, "0x", right, await getSignature(right, user1), { value: 300 })
+			.matchOrders(left, await getSignature(left, user1), right, await getSignature(right, user2));
 		await tx.wait();
-		expect(await t1.balanceOf(user1.address)).to.be.eq(0);
-		expect(await t1.balanceOf(user2.address)).to.be.eq(100);
 	});
-
 });

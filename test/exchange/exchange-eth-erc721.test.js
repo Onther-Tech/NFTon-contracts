@@ -48,8 +48,10 @@ describe("Exchange", () => {
 
 		royaltiesRegistry = await TestRoyaltiesRegistryContract.deploy();
 		await royaltiesRegistry.deployed();
+
 		exchange = await upgrades.deployProxy(ExchangeContract, [transferProxy.address, erc20TransferProxy.address, 300, community.address, royaltiesRegistry.address], { initializer: "__ExchangeV2_init" });
 		await exchange.deployed();
+
 		t1 = await ERC20TestContract.deploy("T1", "S1");
 		await t1.deployed();
 
@@ -67,16 +69,25 @@ describe("Exchange", () => {
     	await exchange.setFeeReceiver(t1.address, protocol.address);
 	});
 
-	it("should match eth to erc20", async () => {
-		await t1.connect(admin).mint(user1.address, 100);
-		await t1.connect(user1).approve(erc20TransferProxy.address, 10000000);
-		const right = Order(user1.address, Asset(ERC20, enc(t1.address), 100), ZERO, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
-    	const left = Order(user2.address, Asset(ETH, "0x", 200), ZERO, Asset(ERC20, enc(t1.address), 100), 1, 0, 0, "0xffffffff", "0x");
+	it("should match eth to erc721", async () => {
+		const erc721TokenId1 = 53;
+		await erc721.connect(admin).mint(user1.address, erc721TokenId1);
+		await erc721.connect(user1).setApprovalForAll(transferProxy.address, true);
+
+		const left = Order(user1.address, Asset(ERC721, enc(erc721.address, erc721TokenId1), 1), ZERO, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
+		const right = Order(user2.address, Asset(ETH, "0x", 200), ZERO, Asset(COLLECTION, enc(erc721.address), 1), 1, 0, 0, "0xffffffff", "0x");
+
+		await matcher.__AssetMatcherCollection_init();
+		await matcher.addOperator(exchange.address);
+
+		await exchange.setAssetMatcher(COLLECTION, matcher.address);
+
 		const tx = await exchange
 			.connect(user2)
-			.matchOrders(left, "0x", right, await getSignature(right, user1), { value: 300 })
+			.matchOrders(left, await getSignature(left, user1), right, await getSignature(right, user2), {value: 300});
 		await tx.wait();
-		expect(await t1.balanceOf(user1.address)).to.be.eq(0);
-		expect(await t1.balanceOf(user2.address)).to.be.eq(100);
+
+		expect(await erc721.balanceOf(user1.address)).to.be.eq(0);
+		expect(await erc721.balanceOf(user2.address)).to.be.eq(1);
 	});
 });

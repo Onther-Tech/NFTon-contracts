@@ -96,7 +96,7 @@ async function sign(order, account, verifyingContract) {
 async function sign(order, account, verifyingContract) {
   const name = "Exchange";
   const version = "2";
-  console.log({ order, verifyingContract });
+  // console.log({ order, verifyingContract });
   const rawSignature = await account._signTypedData(
     {
       chainId: parseInt(await network.provider.send("eth_chainId")),

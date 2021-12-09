@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
-const { Order, Asset, sign } = require("./exchange/utils/order");
-const { ERC20, enc, ETH, ERC721, COLLECTION } = require("./exchange/utils/assets");
+const { Order, Asset, sign } = require("./utils/order");
+const { ERC20, enc, ETH, ERC721, COLLECTION } = require("./utils/assets");
 
 describe("Exchange", () => {
 	const eth = "0x0000000000000000000000000000000000000000";
@@ -81,6 +81,19 @@ describe("Exchange", () => {
     function encodeData(data) {
         return transferManagerTest.encode(data);
     }
+
+	it("should match eth to erc20", async () => {
+		await t1.connect(admin).mint(user1.address, 100);
+		await t1.connect(user1).approve(erc20TransferProxy.address, 10000000);
+		const right = Order(user1.address, Asset(ERC20, enc(t1.address), 100), ZERO, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
+    	const left = Order(user2.address, Asset(ETH, "0x", 200), ZERO, Asset(ERC20, enc(t1.address), 100), 1, 0, 0, "0xffffffff", "0x");
+		const tx = await exchange
+			.connect(user2)
+			.matchOrders(left, "0x", right, await getSignature(right, user1), { value: 300 })
+		await tx.wait();
+		expect(await t1.balanceOf(user1.address)).to.be.eq(0);
+		expect(await t1.balanceOf(user2.address)).to.be.eq(100);
+	});
 
 	it("should match eth to erc20", async () => {
 		await t1.connect(admin).mint(user1.address, 100);

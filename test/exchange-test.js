@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
-const { Order, Asset, sign } = require("./utils/order");
-const { ERC20, enc, ETH, ERC721, COLLECTION } = require("./utils/assets");
+const { Order, Asset, sign } = require("./exchange/utils/order");
+const { ERC20, enc, ETH, ERC721, COLLECTION } = require("./exchange/utils/assets");
 
 describe("Exchange", () => {
 	const eth = "0x0000000000000000000000000000000000000000";

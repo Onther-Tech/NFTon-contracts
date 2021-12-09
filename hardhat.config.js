@@ -8,6 +8,8 @@ require("dotenv").config();
 
 require("./tasks/deploy-exchange");
 require("./tasks/deploy-transfer-proxies");
+require("./tasks/deploy-erc20-test-tokens");
+require("./tasks/deploy-nfts");
 
 
 const {
