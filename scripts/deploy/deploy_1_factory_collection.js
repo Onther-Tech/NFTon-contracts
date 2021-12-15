@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 
-const TransferProxy = "";
-const BaseURI = "";
+const TransferProxy = "0xeE45c2A0b26Ac01179865ed8BbadAC5d246AeDC2";
+const BaseURI = "https://gateway.ipfs.io/ipfs/";
 
 
 async function deployERC721Collection() {
@@ -37,8 +37,12 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   let collectionLogic = await deployERC721Collection();
-  let factory = await deployCollectionFactory(collectionLogic, TransferProxy, BaseURI);
-  console.log("factory:", factory);
+  // 0x37eB3cf2DFED71d328104011B3b765e9085A0b56
+
+
+  // let factory = await deployCollectionFactory(collectionLogic, TransferProxy, BaseURI);
+  //0x4Ff21ED730DEe38478264A4c64336eF3049644E7
+  // console.log("factory:", factory);
 }
 
 
