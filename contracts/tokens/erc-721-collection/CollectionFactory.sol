@@ -18,8 +18,6 @@ contract CollectionFactory {
     mapping(address => Collection) public collections;
     address public _owner;
     address public _implementation;
-    address public TransferProxy;
-    string public _baseURI;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event CreatedCollection(address indexed collection, uint256 indexed salt, string name, string symbol);
