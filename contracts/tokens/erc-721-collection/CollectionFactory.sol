@@ -26,6 +26,7 @@ contract CollectionFactory {
         require(_addr != address(0), "CollectionFactory: zero address");
         _;
     }
+
     modifier nonZero(uint256 _val) {
         require(_val > 0, "CollectionFactory: zero value");
         _;

@@ -147,7 +147,7 @@ contract ERC721Collection is ERC721Storage, IERC721, IERC721Metadata, IERC721Enu
         return _allTokens[index];
     }
 
-    function _tokensOfOwner(address owner_) internal view returns (uint256[] storage) {
+    function tokensOfOwner(address owner_) public view returns (uint256[] memory) {
         return _ownedTokens[owner_];
     }
 

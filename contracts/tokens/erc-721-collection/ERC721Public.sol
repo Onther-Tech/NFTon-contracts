@@ -147,7 +147,7 @@ contract ERC721Public is ERC721Storage, IERC721, IERC721Metadata, IERC721Enumera
         return _allTokens[index];
     }
 
-    function _tokensOfOwner(address owner_) internal view returns (uint256[] storage) {
+    function tokensOfOwner(address owner_) public view returns (uint256[] memory) {
         return _ownedTokens[owner_];
     }
 
@@ -298,15 +298,15 @@ contract ERC721Public is ERC721Storage, IERC721, IERC721Metadata, IERC721Enumera
         emit Transfer(owner_, address(0), tokenId);
     }
 
-    function mint(address to, string calldata tokenURI_) external {
+    function mint(string calldata tokenURI_) external {
         uint256 tokenId = totalSupply();
-        _safeMint(to, tokenId);
+        _safeMint(msg.sender, tokenId);
         _tokenURIs[tokenId] = tokenURI_;
     }
 
-    function mint(address to, string calldata tokenURI_, bytes memory _data) external {
+    function mint(string calldata tokenURI_, bytes memory _data) external {
         uint256 tokenId = totalSupply();
-        _safeMint(to, tokenId, _data);
+        _safeMint(msg.sender, tokenId, _data);
         _tokenURIs[tokenId] = tokenURI_;
     }
 
