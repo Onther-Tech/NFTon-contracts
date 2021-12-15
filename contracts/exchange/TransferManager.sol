@@ -30,6 +30,13 @@ abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
     address public defaultFeeReceiver;
     mapping(address => address) public feeReceivers;
 
+    /// @dev struct that stores protocolFee for both orders in a match
+    struct MatchFees {
+        uint feeSideProtocolFee;
+        uint nftSideProtocolFee;
+        LibFeeSide.FeeSide feeSide;
+    }
+
     function __TransferManager_init_unchained(
         uint newProtocolFee,
         address newDefaultFeeReceiver,
@@ -65,40 +72,70 @@ abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
     }
 
     function doTransfers(
-        LibAsset.AssetType memory makeMatch,
-        LibAsset.AssetType memory takeMatch,
+        LibOrder.MatchedAssets memory matchedAssets,
         LibFill.FillResult memory fill,
         LibOrder.Order memory leftOrder,
         LibOrder.Order memory rightOrder,
         LibOrderDataV2.DataV2 memory leftOrderData,
         LibOrderDataV2.DataV2 memory rightOrderData
     ) override internal returns (uint totalMakeValue, uint totalTakeValue) {
-        LibFeeSide.FeeSide feeSide = LibFeeSide.getFeeSide(makeMatch.assetClass, takeMatch.assetClass);
+        MatchFees memory matchFees = getMatchFees(leftOrder, rightOrder, matchedAssets.makeMatch, matchedAssets.takeMatch);
+
         totalMakeValue = fill.leftValue;
         totalTakeValue = fill.rightValue;
-        if (feeSide == LibFeeSide.FeeSide.MAKE) {
-            totalMakeValue = doTransfersWithFees(fill.leftValue, leftOrder.maker, leftOrderData, rightOrderData, makeMatch, takeMatch,  TO_TAKER);
-            transferPayouts(takeMatch, fill.rightValue, rightOrder.maker, leftOrderData.payouts, TO_MAKER);
-        } else if (feeSide == LibFeeSide.FeeSide.TAKE) {
-            totalTakeValue = doTransfersWithFees(fill.rightValue, rightOrder.maker, rightOrderData, leftOrderData, takeMatch, makeMatch, TO_MAKER);
-            transferPayouts(makeMatch, fill.leftValue, leftOrder.maker, rightOrderData.payouts, TO_TAKER);
+        if (matchFees.feeSide == LibFeeSide.FeeSide.MAKE) {
+            totalMakeValue = doTransfersWithFees(
+                fill.leftValue, 
+                leftOrder.maker, 
+                matchFees, 
+                leftOrderData, 
+                rightOrderData, 
+                matchedAssets.makeMatch, 
+                matchedAssets.takeMatch,  
+                TO_TAKER
+            );
+            transferPayouts(matchedAssets.takeMatch, 
+                fill.rightValue, 
+                rightOrder.maker, 
+                leftOrderData.payouts, 
+                TO_MAKER
+            );
+        } else if (matchFees.feeSide == LibFeeSide.FeeSide.TAKE) {
+            totalTakeValue = doTransfersWithFees(
+                fill.rightValue, 
+                rightOrder.maker, 
+                matchFees, 
+                rightOrderData, 
+                leftOrderData, 
+                matchedAssets.takeMatch, 
+                matchedAssets.makeMatch, 
+                TO_MAKER
+            );
+            transferPayouts(
+                matchedAssets.makeMatch, 
+                fill.leftValue, 
+                leftOrder.maker, 
+                rightOrderData.payouts, 
+                TO_TAKER
+            );
         } else {
-            transferPayouts(makeMatch, fill.leftValue, leftOrder.maker, rightOrderData.payouts, TO_TAKER);
-            transferPayouts(takeMatch, fill.rightValue, rightOrder.maker, leftOrderData.payouts, TO_MAKER);
+            transferPayouts(matchedAssets.makeMatch, fill.leftValue, leftOrder.maker, rightOrderData.payouts, TO_TAKER);
+            transferPayouts(matchedAssets.takeMatch, fill.rightValue, rightOrder.maker, leftOrderData.payouts, TO_MAKER);
         }
     }
 
     function doTransfersWithFees(
         uint amount,
         address from,
+        MatchFees memory matchProtocolFee,
         LibOrderDataV2.DataV2 memory dataCalculate,
         LibOrderDataV2.DataV2 memory dataNft,
         LibAsset.AssetType memory matchCalculate,
         LibAsset.AssetType memory matchNft,
         bytes4 transferDirection
     ) internal returns (uint totalAmount) {
-        totalAmount = calculateTotalAmount(amount, protocolFee, dataCalculate.originFees);
-        uint rest = transferProtocolFee(totalAmount, amount, from, matchCalculate, transferDirection);
+        totalAmount = calculateTotalAmount(amount, matchProtocolFee.feeSideProtocolFee, dataCalculate.originFees);
+        uint rest = transferProtocolFee(totalAmount, amount, from, matchProtocolFee, matchCalculate, transferDirection);
         rest = transferRoyalties(matchCalculate, matchNft, rest, amount, from, transferDirection);
         (rest,) = transferFees(matchCalculate, rest, amount, dataCalculate.originFees, from, transferDirection, ORIGIN);
         (rest,) = transferFees(matchCalculate, rest, amount, dataNft.originFees, from, transferDirection, ORIGIN);
@@ -109,10 +146,11 @@ abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
         uint totalAmount,
         uint amount,
         address from,
+        MatchFees memory matchProtocolFee,
         LibAsset.AssetType memory matchCalculate,
         bytes4 transferDirection
     ) internal returns (uint) {
-        (uint rest, uint fee) = subFeeInBp(totalAmount, amount, protocolFee);
+        (uint rest, uint fee) = subFeeInBp(totalAmount, amount, matchProtocolFee.feeSideProtocolFee + matchProtocolFee.nftSideProtocolFee);
         if (fee > 0) {
             address tokenAddress = address(0);
             if (matchCalculate.assetClass == LibAsset.ERC20_ASSET_CLASS) {
@@ -216,6 +254,12 @@ abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
 
     function subFeeInBp(uint value, uint total, uint feeInBp) internal pure returns (uint newValue, uint realFee) {
         return subFee(value, total.bp(feeInBp));
+    }
+
+    /// @dev ruturns MatchFees struct with protocol fees of both orders in a match
+    function getMatchFees(LibOrder.Order memory leftOrder, LibOrder.Order memory rightOrder, LibAsset.AssetType memory makeMatch, LibAsset.AssetType memory takeMatch) internal view returns(MatchFees memory){
+        // gonna be fully used with onchain orders
+        return MatchFees(protocolFee, protocolFee, LibFeeSide.getFeeSide(makeMatch.assetClass, takeMatch.assetClass));
     }
 
     function subFee(uint value, uint fee) internal pure returns (uint newValue, uint realFee) {

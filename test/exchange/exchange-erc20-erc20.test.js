@@ -18,7 +18,12 @@ describe("Exchange", () => {
 	let protocol;
 	let erc721;
 	let transferManager;
+	let originReceiver1;
+	let originReceiver2;
+	let payoutsReceiver1;
+	let payoutsReceiver2;
 	let nonUsed;
+
 	const hugeAmount = 100000000;
 
 	async function getSignature(order, signer) {

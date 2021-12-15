@@ -68,6 +68,4 @@ describe("Exchange", () => {
     	await exchange.setFeeReceiver(eth, protocol.address);
     	await exchange.setFeeReceiver(t1.address, protocol.address);
 	});
-
-    
 });

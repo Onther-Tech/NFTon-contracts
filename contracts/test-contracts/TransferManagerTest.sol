@@ -26,7 +26,7 @@ contract TransferManagerTest is TransferManager, TransferExecutor, OrderValidato
         LibOrder.Order memory leftOrder,
         LibOrder.Order memory rightOrder
     ) payable external {
-        doTransfers(makeMatch, takeMatch, fill, leftOrder, rightOrder, LibOrderData.parse(leftOrder), LibOrderData.parse(rightOrder));
+        doTransfers(LibOrder.MatchedAssets(makeMatch, takeMatch), fill, leftOrder, rightOrder, LibOrderData.parse(leftOrder), LibOrderData.parse(rightOrder));
     }
 
     function __TransferManager_init(

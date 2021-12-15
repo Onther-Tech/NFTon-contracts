@@ -26,6 +26,11 @@ library LibOrder {
         bytes data;
     }
 
+    struct MatchedAssets {
+        LibAsset.AssetType makeMatch;
+        LibAsset.AssetType takeMatch;
+    }
+
     function calculateRemaining(Order memory order, uint fill, bool isMakeFill) internal pure returns (uint makeValue, uint takeValue) {
         if (isMakeFill){
             makeValue = order.makeAsset.value.sub(fill);
