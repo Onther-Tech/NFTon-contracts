@@ -113,10 +113,10 @@ contract ERC721Proxy is
         }
     }
 
-    function init(address _imp, string memory baseURI_, address admin, address TransferProxy) external onlyOwner  {
+    function init(address _imp, string memory baseURI_, address admin, address TransferProxy, address _log) external onlyOwner  {
         if(bytes(baseURI_).length > 0) _baseURI = baseURI_;
         if(TransferProxy != address(0)) _operatorApprovals[admin][TransferProxy] = true;
-
+        if(_log != address(0)) log = _log;
         upgradeTo(_imp) ;
     }
 }

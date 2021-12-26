@@ -95,4 +95,5 @@ contract ERC721Storage is Context, ERC165 {
 
     bool public pauseProxy;
 
+    address public log;
 }

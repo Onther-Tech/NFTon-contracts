@@ -18,6 +18,7 @@ contract CollectionFactory {
     mapping(address => Collection) public collections;
     address public _owner;
     address public _implementation;
+    address public _log;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event CreatedCollection(address indexed collection, uint256 indexed salt, string name, string symbol);
@@ -68,6 +69,15 @@ contract CollectionFactory {
         _implementation = _new;
     }
 
+    /// @dev Set _implementation address
+    function setLog(address _new)
+        external
+        onlyOwner
+        nonZeroAddress(_new)
+    {
+        _log = _new;
+    }
+
     /// @dev Create a stake contract that calls the desired stake factory according to stakeType
     /// @param name name
     /// @param symbol symbol
@@ -83,6 +93,7 @@ contract CollectionFactory {
         string memory baseURI)
     external
     nonZeroAddress(_implementation)
+    nonZeroAddress(_log)
     nonZeroAddress(admin)
     nonZero(salt)
     returns (address) {
@@ -104,7 +115,7 @@ contract CollectionFactory {
         require(address(collection_) != address(0), "FactoryCollection: zero collection");
         salts[salt] = address(collection_);
 
-        collection_.init(_implementation, baseURI, admin, transferProxy);
+        collection_.init(_implementation, baseURI, admin, transferProxy, _log);
         collection_.transferOwnership(admin);
 
         collections[address(collection_)] = Collection(name,symbol,address(collection_),salt);

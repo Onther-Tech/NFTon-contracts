@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+import "./CollectionLog.sol";
 import "./ERC721Storage.sol";
 /**
  * @title ERC721 Non-Fungible Token Standard basic implementation
@@ -510,6 +511,12 @@ contract ERC721Public is ERC721Storage, IERC721, IERC721Metadata, IERC721Enumera
        _setBaseURI(baseURI_);
     }
 
+    /// @dev Set _implementation address
+    function setLog(address _new) public onlyOwner virtual
+    {
+        log = _new;
+    }
+
     /**
      * @dev Internal function to invoke {IERC721Receiver-onERC721Received} on a target address.
      * The call is not executed if the target address is not a contract.
@@ -557,5 +564,7 @@ contract ERC721Public is ERC721Storage, IERC721, IERC721Metadata, IERC721Enumera
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual { }
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual {
+        if(log != address(0)) CollectionLog(log).logTransfer(from, to, address(this), tokenId);
+     }
 }
