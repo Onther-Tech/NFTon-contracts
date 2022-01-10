@@ -44,8 +44,8 @@ abstract contract TransferExecutor is Initializable, OwnableUpgradeable, ITransf
             to.transferEth(asset.value);
         } else if (asset.assetType.assetClass == LibAsset.ERC20_ASSET_CLASS) {
             (address token) = abi.decode(asset.assetType.data, (address));
-            console.log("%s %s %d", proxies[LibAsset.ERC20_ASSET_CLASS], from, asset.value);
-            console.log("%s", to);
+            console.log("from: %s to: %s", from, to);
+            console.log("token: %s %d", token, asset.value);
             IERC20TransferProxy(proxies[LibAsset.ERC20_ASSET_CLASS]).erc20safeTransferFrom(IERC20Upgradeable(token), from, to, asset.value);
         } else if (asset.assetType.assetClass == LibAsset.ERC721_ASSET_CLASS) {
             (address token, uint tokenId) = abi.decode(asset.assetType.data, (address, uint256));

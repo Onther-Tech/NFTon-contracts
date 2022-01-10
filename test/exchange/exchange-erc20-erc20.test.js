@@ -34,6 +34,10 @@ describe("Exchange", () => {
         return transferManager.encode(data);
     }
 
+	async function encodeDataV2(data) {
+        return transferManager.encodeV2(data);
+    }
+
 	before(async () => {
 		const TransferProxyContract = await ethers.getContractFactory("TransferProxyTest");
 		const erc20TransferProxyContract = await ethers.getContractFactory("ERC20TransferProxyTest");
@@ -63,6 +67,10 @@ describe("Exchange", () => {
 			user2: user2.address,
 			community: community.address,
 			protocol: protocol.address,
+			originReceiver1: originReceiver1.address,
+            originReceiver2: originReceiver2.address,
+            payoutsReceiver1: payoutsReceiver1.address,
+            payoutsReceiver2: payoutsReceiver2.address,
 		})
 
 		transferManager = await transferManagerTestContract.deploy();
@@ -148,18 +156,22 @@ describe("Exchange", () => {
 			.connect(user1)
 			.matchOrders(left, "0x", right, await getSignature(right, user2))
 		await tx.wait();
+		const user1Balance = parseInt(await t2.balanceOf(user1.address));
+		console.log({ user1Balance });
+		const user2Balance = parseInt(await t1.balanceOf(user2.address));
+		console.log({ user2Balance });
+ 
 		// expect(await t1.balanceOf(user1.address)).to.be.eq(0);
  	});
 
 	it("should match erc20 to erc20 with fees", async () => {
 		const t1Amount = 100;
-		const feeAmount = 100;
-		await t1.connect(admin).mint(user1.address, feeAmount + t1Amount);
-		await t1.connect(user1).approve(erc20TransferProxy.address, feeAmount + t1Amount);
+		const feeAmount = 3;
+		const originsFee = 1 + 2;
+		await mintAndApprove(user1, t1, originsFee + t1Amount + feeAmount, erc20TransferProxy.address);
 
 		const t2Amount = 200;
-		await t2.connect(admin).mint(user2.address, t2Amount);
-		await t2.connect(user2).approve(erc20TransferProxy.address, t2Amount);
+		await mintAndApprove(user2, t2, t2Amount, erc20TransferProxy.address);
 
 		const originsLeft = [
             [originReceiver1.address, 100],
@@ -169,16 +181,16 @@ describe("Exchange", () => {
         ];
 
         const payoutsLeft = [
-            // [payoutsReceiver1.address, 10000],
+         	// [payoutsReceiver1.address, 10000],
         ];
         const payoutsRight = [
             // [payoutsReceiver1.address, 10000]
         ];
 
-        const encDataLeft = await encodeData(
+        const encDataLeft = await encodeDataV2(
             [payoutsLeft, originsLeft]
         );
-        const encDataRight = await encodeData(
+        const encDataRight = await encodeDataV2(
             [payoutsRight, originsRight]
         );
         

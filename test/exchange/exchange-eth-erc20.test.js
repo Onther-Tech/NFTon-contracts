@@ -18,7 +18,7 @@ describe("Exchange", () => {
 	let protocol;
 	let erc721;
 	let transferManager;
-
+	let nonUsed;
 	async function getSignature(order, signer) {
 		return sign(order, signer, exchange.address);
 	}
@@ -44,6 +44,7 @@ describe("Exchange", () => {
             originReceiver2,
             payoutsReceiver1,
             payoutsReceiver2,
+			nonUsed
         ] = await ethers.getSigners();	
 		
         console.log({
@@ -87,6 +88,18 @@ describe("Exchange", () => {
         return transferManager.encode(data);
     }
 
+	const emptyBalance = async (user, token) => {
+		const balance = parseInt(await token.balanceOf(user.address));
+		await (await token.connect(user).transfer(nonUsed.address, balance)).wait();
+	}
+
+	beforeEach(async() => {
+		await emptyBalance(user1, t1);
+		await emptyBalance(user1, t2);
+		await emptyBalance(user2, t1);
+		await emptyBalance(user2, t2);
+	});
+
 	it("should match eth to erc20", async () => {
 		await t1.connect(admin).mint(user1.address, 100);
 		await t1.connect(user1).approve(erc20TransferProxy.address, 10000000);
@@ -96,13 +109,15 @@ describe("Exchange", () => {
 			.connect(user2)
 			.matchOrders(left, "0x", right, await getSignature(right, user1), { value: 300 })
 		await tx.wait();
+		const balance = parseInt(await ethers.provider.getBalance(user1.address));
+		console.log({ balance });
 		expect(await t1.balanceOf(user1.address)).to.be.eq(0);
 		expect(await t1.balanceOf(user2.address)).to.be.eq(100);
 	});
 
-	it("should match eth to erc20", async () => {
-		await t1.connect(admin).mint(user1.address, 100);
-		await t1.connect(user1).approve(erc20TransferProxy.address, 10000000);
+	it("should match eth to erc20 with payouts", async () => {
+		await t1.connect(admin).mint(user2.address, 100);
+		await t1.connect(user2).approve(erc20TransferProxy.address, 10000000);
         const originsLeft = [
             [originReceiver1.address, 100],
         ];
@@ -152,6 +167,7 @@ describe("Exchange", () => {
 			.connect(user1)
 			.matchOrders(left, "0x", right, await getSignature(right, user2), { value: 300 })
 		await tx.wait();
+		
 		// expect(await t1.balanceOf(user1.address)).to.be.eq(0);
 		// expect(await t1.balanceOf(user2.address)).to.be.eq(100);
 	});

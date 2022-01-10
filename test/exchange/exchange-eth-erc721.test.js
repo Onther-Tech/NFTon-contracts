@@ -84,7 +84,7 @@ describe("Exchange", () => {
 
 		const tx = await exchange
 			.connect(user2)
-			.matchOrders(left, await getSignature(left, user1), right, await getSignature(right, user2), {value: 300});
+			.matchOrdersMultiple([left], [await getSignature(left, user1)], [right], [await getSignature(right, user2)], {value: 300});
 		await tx.wait();
 
 		expect(await erc721.balanceOf(user1.address)).to.be.eq(0);

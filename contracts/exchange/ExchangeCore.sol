@@ -84,6 +84,27 @@ abstract contract ExchangeCore is Initializable, OwnableUpgradeable, AssetMatche
         matchOrders(left, signatureLeft, right, signatureRight);
     }*/
 
+    function matchOrdersMultiple(
+        LibOrder.Order[] memory ordersLeft,
+        bytes[] memory signaturesLeft,
+        LibOrder.Order[] memory ordersRight,
+        bytes[] memory signaturesRight
+    ) public payable {
+        uint256 length = ordersLeft.length;
+        require(signaturesLeft.length == length, "Lengths don't match");
+        require(ordersRight.length == length, "Lengths don't match");
+        require(signaturesRight.length == length, "Lengths don't match");
+
+        for (uint256 i = 0; i < length; ++i) {
+            matchOrders(
+                ordersLeft[i],
+                signaturesLeft[i],
+                ordersRight[i],
+                signaturesRight[i]
+            );
+        }
+    }
+
     function matchOrders(
         LibOrder.Order memory orderLeft,
         bytes memory signatureLeft,

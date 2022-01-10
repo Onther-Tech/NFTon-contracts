@@ -231,10 +231,11 @@ abstract contract TransferManager is OwnableUpgradeable, ITransferManager {
                 restValue = restValue.sub(currentAmount);
                 transfer(LibAsset.Asset(matchCalculate, currentAmount), from, payouts[i].account, transferDirection, PAYOUT);
             }
+            console.log("bps: %d, last: %s %d", sumBps, payouts[i].account, currentAmount);
         }
         LibPart.Part memory lastPayout = payouts[payouts.length - 1];
         sumBps = sumBps.add(lastPayout.value);
-        console.log("bps: %s", sumBps);
+        console.log("bps: %d, last: %s %d", sumBps, lastPayout.account, restValue);
         require(sumBps == 10000, "Sum payouts Bps not equal 100%");
         if (restValue > 0) {
             transfer(LibAsset.Asset(matchCalculate, restValue), from, lastPayout.account, transferDirection, PAYOUT);

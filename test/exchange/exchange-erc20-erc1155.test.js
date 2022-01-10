@@ -17,6 +17,7 @@ describe("Exchange", () => {
 	let community;
 	let protocol;
 	let erc721;
+	let erc1155;
 
 	async function getSignature(order, signer) {
 		return sign(order, signer, exchange.address);
@@ -27,6 +28,7 @@ describe("Exchange", () => {
 		const erc20TransferProxyContract = await ethers.getContractFactory("ERC20TransferProxyTest");
 		const TestRoyaltiesRegistryContract = await ethers.getContractFactory("TestRoyaltiesRegistry");
 		const AssetMatcherCollectionTestContract = await ethers.getContractFactory("AssetMatcherCollectionTest");
+		const TestERC1155 = await ethers.getContractFactory("TestERC1155WithRoyaltiesV2");
 
 		const ExchangeContract = await ethers.getContractFactory("Exchange");
 		const ERC721TestContract = await ethers.getContractFactory("TestERC721");
@@ -42,6 +44,10 @@ describe("Exchange", () => {
 		})
 		transferProxy = await TransferProxyContract.deploy();
 		await transferProxy.deployed();
+
+		erc1155 = await TestERC1155.deploy("https://ipfs.exchange.com");
+		await erc1155.deployed();
+		await erc1155.initialize();
 
 		erc20TransferProxy = await erc20TransferProxyContract.deploy();
 		await erc20TransferProxy.deployed();
