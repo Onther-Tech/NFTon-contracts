@@ -28,6 +28,10 @@ describe("Exchange", () => {
         return transferManager.encode(data);
     }
 
+	async function encodeDataV2(data) {
+        return transferManager.encodeV2(data);
+    }
+
 	async function getSignature(order, signer) {
 		return sign(order, signer, exchange.address);
 	}
@@ -168,18 +172,17 @@ describe("Exchange", () => {
         ];
 
         const payoutsLeft = [
-        	[user1.address, 5000],
-         	[payoutsReceiver1.address, 5000],
+        	[user1.address, 10000],
         ];
         const payoutsRight = [
-        	[payoutsReceiver1.address, 10000]
+        	[user2.address, 10000]
         ];
 
-        const encDataLeft = await encodeData(
-            [payoutsLeft, originsLeft]
+        const encDataLeft = await encodeDataV2(
+            [payoutsLeft, originsLeft, true]
         );
-        const encDataRight = await encodeData(
-            [payoutsRight, originsRight]
+        const encDataRight = await encodeDataV2(
+            [payoutsRight, originsRight, true]
         );
         
 		const left = Order(
@@ -190,7 +193,7 @@ describe("Exchange", () => {
 			1,
 			0,
 			0,
-			ORDER_DATA_V1,
+			ORDER_DATA_V2,
 			encDataLeft,
 		);
 
@@ -202,7 +205,7 @@ describe("Exchange", () => {
 			1,
 			0,
 			0,
-			ORDER_DATA_V1,
+			ORDER_DATA_V2,
 			encDataRight,
 		);
 
@@ -215,8 +218,8 @@ describe("Exchange", () => {
 
 		const owner2 = await erc721.ownerOf(user2ERC721TokenId);
 		console.log({ owner2 });
-		// expect(await erc721.ownerOf(user2ERC721TokenId)).to.be.eq(user1.address);
-		// expect(await erc721.ownerOf(user1ERC721TokenId)).to.be.eq(user2.address);
+		expect(await erc721.ownerOf(user2ERC721TokenId)).to.be.eq(user1.address);
+		expect(await erc721.ownerOf(user1ERC721TokenId)).to.be.eq(user2.address);
 	});
 
 
